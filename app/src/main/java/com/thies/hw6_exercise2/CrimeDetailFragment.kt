@@ -1,6 +1,7 @@
 package com.thies.hw6_exercise1
 
 import android.os.Bundle
+import android.system.Os.remove
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -9,10 +10,12 @@ import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.addCallback
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.Navigation
@@ -40,20 +43,33 @@ class CrimeDetailFragment: Fragment() {
         CrimeDetailViewModelFactory(args.crimeId)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        super.onCreateView(inflater, container, savedInstanceState)
 
-    }
+        // Used android developer code and Professor Bateman pseudocode to help complete
+        // creating val to hold the callback; making it required when back button is pressed
+        val callback = requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner){
+            // binding code to get hold of text in the crime title field
+            val crimeTitle = binding.crimeTitle.text
+            // logic to either remind user of mistake or to accept the text put in field
+            if (crimeTitle.isBlank()){
+                Toast.makeText(
+                    context,
+                    "Please provide a description of the crime.",
+                    Toast.LENGTH_LONG).show()
+            } else{
+                remove()
+                requireActivity().onBackPressedDispatcher.onBackPressed()
+            }
+        }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+        // enabling callback so it is used when back button is pressed
+        callback.isEnabled
+
         _binding = FragmentCrimeDetailBinding.inflate(layoutInflater, container, false)
         return binding.root
-    }
 
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -98,23 +114,9 @@ class CrimeDetailFragment: Fragment() {
             crimeDate.text = crime.date.toString()
             crimeSolved.isChecked = crime.isSolved
         }
-
-        val onBackPressedCallback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding.crimeTitle.toString() == " ") {
-                    Toast.makeText(
-                        context,
-                        "Please provide a description of the crime.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    findNavController().navigate(R.id.crimeListFragment)
-                }
-            }
-        }
-        requireActivity().onBackPressedDispatcher.addCallback(onBackPressedCallback)
     }
 }
+
 
 
 
